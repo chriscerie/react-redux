@@ -1,0 +1,24 @@
+{
+	"name": "react-redux-test",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+      "Packages": {
+        "$path": "Packages",
+        "ReactRedux": {
+          "$path": "src"
+        }
+      },
+      "Stories": {
+        "$path": "stories"
+      }
+		},
+    "StarterPlayer": {
+			"StarterPlayerScripts": {
+				"testRunner": {
+					"$path": "test/testRunner.client.lua"
+				}
+			}
+		}
+	}
+}

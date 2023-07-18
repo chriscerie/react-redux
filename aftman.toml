@@ -1,0 +1,5 @@
+[tools]
+rojo = "rojo-rbx/rojo@7.3.0"
+selene = "kampfkarren/selene@0.25.0"
+wally-package-types = "JohnnyMorganz/wally-package-types@1.2.1"
+stylua = "johnnymorganz/stylua@0.18.1"
