@@ -1,3 +1,4 @@
+--selene: allow(global_usage)
 _G.__ROACT_17_MOCK_SCHEDULER__ = true
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

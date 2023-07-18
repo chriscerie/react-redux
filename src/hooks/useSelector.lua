@@ -42,6 +42,7 @@ exports.createSelectorHook = function(context: ReactReduxContext.ReactReduxConte
 	return function<TState, Selected>(selector: (state: TState) -> Selected, equalityFn: types.EqualityFn<any>?): Selected
 		equalityFn = equalityFn or refEquality
 
+		--selene: allow(global_usage)
 		if _G.__DEV__ then
 			if not selector then
 				error(`You must pass a selector to useSelector`)

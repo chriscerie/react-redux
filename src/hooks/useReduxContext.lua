@@ -23,6 +23,7 @@ local exports = {}
 exports.useReduxContext = function(): ReactReduxContext.ReactReduxContextValue?
 	local contextValue = React.useContext(ReactReduxContext)
 
+	--selene: allow(global_usage)
 	if _G.__DEV__ and not contextValue then
 		error("could not find react-redux context value; please ensure the component is wrapped in a <Provider>")
 	end

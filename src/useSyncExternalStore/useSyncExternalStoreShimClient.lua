@@ -47,6 +47,7 @@ local useSyncExternalStore = function<T>(subscribe: (() -> ()) -> () -> (), getS
 	-- implementation details, most importantly that updates are
 	-- always synchronous.
 	local value = getSnapshot()
+	--selene: allow(global_usage)
 	if _G.__DEV__ then
 		if not didWarnUncachedGetSnapshot then
 			local cachedValue = getSnapshot()

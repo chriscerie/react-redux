@@ -13,6 +13,7 @@ local ReactReduxContext = React.createContext(nil :: ReactReduxContextValue?)
 
 export type ReactReduxContextInstance = typeof(ReactReduxContext)
 
+--selene: allow(global_usage)
 if _G.__DEV__ then
 	ReactReduxContext.displayName = "ReactRedux"
 end
