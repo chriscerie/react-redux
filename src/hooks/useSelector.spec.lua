@@ -1,9 +1,11 @@
+--!strict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local React = require(ReplicatedStorage.Packages.React)
 local ReactRoblox = require(ReplicatedStorage.Packages.ReactRoblox)
 local ReactRedux = require(ReplicatedStorage.Packages.ReactRedux)
 local Redux = require(ReplicatedStorage.Packages.Redux)
+local Collections = require(ReplicatedStorage.Packages.Collections)
 
 local e = React.createElement
 local act = function(fn)
@@ -276,6 +278,184 @@ return function()
 				expect(renderedItems[1]).to.equal(0)
 				expect(renderedItems[2]).to.equal(1)
 				expect(renderedItems[2]).to.equal(1)
+			end)
+
+			it("works properly with memoized selector with dispatch in Child useLayoutEffect", function()
+				local store = Redux.Store.new(function(c: number)
+					c = c or 1
+					return c + 1
+				end, -1)
+
+				local Child = function(props: { parentCount: number })
+					React.useLayoutEffect(function()
+						if props.parentCount == 1 then
+							store:dispatch({ type = "" })
+						end
+					end)
+					return
+				end
+
+				local Comp = function()
+					local selector = React.useCallback(function(c: number)
+						return c
+					end, {})
+
+					local count = ReactRedux.useSelector(selector)
+
+					table.insert(renderedItems, count)
+
+					return e(Child, {
+						parentCount = count,
+					})
+				end
+
+				act(function()
+					root:render(e(ReactRedux.Provider, {
+						store = store,
+					}, {
+						Comp = e(Comp),
+					}))
+				end)
+
+				-- The first render doesn't trigger dispatch
+				expect(#renderedItems).to.equal(1)
+				expect(renderedItems[1]).to.equal(0)
+
+				act(function()
+					store:dispatch({ type = "" })
+				end)
+
+				expect(#renderedItems).to.equal(3)
+				expect(renderedItems[1]).to.equal(0)
+				expect(renderedItems[2]).to.equal(1)
+				expect(renderedItems[3]).to.equal(2)
+			end)
+		end)
+
+		describe("performance optimizations and bail-outs", function()
+			it("defaults to ref-equality to prevent unnecessary updates", function()
+				local state = {}
+
+				local store = Redux.Store.new(function()
+					return state
+				end)
+
+				local Comp = function()
+					local value = ReactRedux.useSelector(function(s)
+						return s
+					end)
+
+					table.insert(renderedItems, value)
+					return
+				end
+
+				act(function()
+					root:render(e(ReactRedux.Provider, {
+						store = store,
+					}, {
+						Comp = e(Comp),
+					}))
+				end)
+
+				expect(#renderedItems).to.equal(1)
+
+				act(function()
+					store:dispatch({
+						type = "",
+					})
+				end)
+
+				expect(#renderedItems).to.equal(1)
+			end)
+
+			it("allows other equality functions to prevent unnecessary updates", function()
+				type StateType = {
+					count: number,
+					stable: {},
+				}
+
+				local store = Redux.Store.new(function(state: StateType)
+					state = state or {
+						count = -1,
+						stable = {},
+					}
+
+					return {
+						count = state.count + 1,
+						stable = state.stable,
+					}
+				end)
+
+				local Comp = function()
+					local value = ReactRedux.useSelector(function(s: StateType)
+						return Collections.Object.keys(s)
+					end, ReactRedux.shallowEqual)
+
+					table.insert(renderedItems, value)
+					return
+				end
+
+				act(function()
+					root:render(e(ReactRedux.Provider, {
+						store = store,
+					}, {
+						Comp = e(Comp),
+					}))
+				end)
+
+				expect(#renderedItems).to.equal(1)
+
+				act(function()
+					store:dispatch({ type = "" })
+				end)
+
+				expect(#renderedItems).to.equal(1)
+			end)
+
+			it("calls selector exactly once on mount and on update", function()
+				type StateType = {
+					count: number,
+				}
+
+				local store = Redux.Store.new(function(state: StateType)
+					state = state or {
+						count = 0,
+					}
+
+					return {
+						count = state.count + 1,
+					}
+				end)
+
+				local numCalls = 0
+				local selector = function(s: StateType)
+					numCalls += 1
+					return s.count
+				end
+
+				local Comp = function()
+					local value = ReactRedux.useSelector(selector)
+					table.insert(renderedItems, value)
+					return
+				end
+
+				act(function()
+					root:render(e(ReactRedux.Provider, {
+						store = store,
+					}, {
+						Comp = e(Comp),
+					}))
+				end)
+
+				expect(numCalls).to.equal(1)
+				expect(#renderedItems).to.equal(1)
+
+				act(function()
+					store:dispatch({ type = "" })
+				end)
+
+				expect(numCalls).to.equal(2)
+				expect(#renderedItems).to.equal(2)
 			end)
 		end)
 	end)
